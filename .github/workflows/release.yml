@@ -49,6 +49,8 @@ jobs:
     env:
       OPERATOR_QUAY_NAME: ${{ github.event.inputs.quay_operator_name }}
     steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
     - name: Build
       run: make clean build
   test:
