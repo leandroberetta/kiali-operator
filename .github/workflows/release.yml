@@ -89,6 +89,7 @@ jobs:
     needs: [initialize]
     env:
       OPERATOR_QUAY_NAME: ${{ github.event.inputs.quay_operator_name }}
+      OPERATOR_RELEASING_BRANCH: ${{ github.event.inputs.operator_releasing_branch }}
       RELEASE_TYPE: ${{ needs.initialize.outputs.release_type }}
       CURRENT_VERSION: ${{ needs.initialize.outputs.current_version }}
       RELEASING_VERSION: ${{ needs.initialize.outputs.releasing_version }}
@@ -121,6 +122,7 @@ jobs:
         git config user.name 'leandroberetta'
 
     - name: Create tag
+      # Edge release is not tagged in GitHub
       if: ${{ needs.initialize.outputs.release_type != 'edge' }}
       run: |
         git add Makefile
@@ -137,3 +139,25 @@ jobs:
           -H "Content-Type: application/json" \
           -d "{\"name\": \"Kiali Operator $RELEASING_VERSION\", \"tag_name\": \"$RELEASING_VERSION\", \"prerelease\": $PRERELEASE}" \
           -X POST $OPERATOR_RELEASE_URI
+    
+    - name: Create or update version branch      
+      if: ${{ needs.initialize.outputs.release_type != 'edge' && !contains(needs.initialize.outputs.release_type, "snapshot") }}
+      run: git push origin $(git rev-parse HEAD):refs/heads/$VERSION_BRANCH"
+
+    - name: Create a PR to prepare for next version
+      env:
+        BUILD_TAG: kiali-operator-release-${{ github.run_number }}-main
+      if: ${{ needs.initialize.outputs.release_type == 'minor' }}
+      run: |
+        sed -i -r "s/^VERSION \?= (.*)/VERSION \?= v$NEXT_VERSION-SNAPSHOT/" Makefile
+        
+        git add Makefile
+        
+        git commit -m "Prepare for next version"
+        
+        git push origin $(git rev-parse HEAD):refs/heads/$BUILD_TAG
+        
+        curl -H "Authorization: token ${{ secrets.GH_TOKEN }}" \
+                -H "Content-Type: application/json" \
+                -d '{"title": "Prepare for next version", "body": "Please, merge to update version numbers and prepare for release $NEXT_VERSION.", "head": "${kialiBotUser}:$BUILD_TAG", "base": "$OPERATOR_RELEASING_BRANCH"}' \
+                -X POST $OPERATOR_PULL_URI
