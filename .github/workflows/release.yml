@@ -47,4 +47,6 @@ jobs:
     name: Test
     runs-on: ubuntu-20.04
     needs: [initialize]
-    run: echo ${{ needs.initialize.outputs.release_type}}
+    steps:
+    - name: Test
+      run: echo ${{ needs.initialize.outputs.release_type}}
