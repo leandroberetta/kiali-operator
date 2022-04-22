@@ -93,8 +93,8 @@ jobs:
       uses: actions/checkout@v2
     
     - name: Set version to release
-      run: sed -i -r 's/^VERSION \\?= v.*/VERSION \\?= ${{ needs.initialize.outputs.current_version }}/' Makefile
-
+      run: sed -i -r 's/^VERSION \?= v.*/VERSION \?= ${{ needs.initialize.outputs.current_version }}/' Makefile           
+           
     - name: Test
       run: cat Makefile
 
