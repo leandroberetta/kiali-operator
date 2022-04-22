@@ -22,7 +22,7 @@ on:
       operator_releasing_branch:
         description: The operator repository's branch to release
         required: true
-        default: refs/head/master
+        default: master
         type: string
       quay_operator_name:
         description: The name of the Quay repository to push the release     
@@ -157,6 +157,6 @@ jobs:
         git push origin $(git rev-parse HEAD):refs/heads/$BUILD_TAG
         
         curl -H "Authorization: token ${{ secrets.GH_TOKEN }}" \
-                -H "Content-Type: application/json" \
-                -d "{\"title\": \"Prepare for next version\", \"body\": \"Please, merge to update version numbers and prepare for release $NEXT_VERSION.\", \"head\": \"leandroberetta:$BUILD_TAG\", \"base\": \"$OPERATOR_RELEASING_BRANCH\"}" \
-                -X POST $OPERATOR_PULL_URI
+          -H "Content-Type: application/json" \
+          -d "{\"title\": \"Prepare for next version\", \"body\": \"Please, merge to update version numbers and prepare for release $NEXT_VERSION.\", \"head\": \"leandroberetta:$BUILD_TAG\", \"base\": \"$OPERATOR_RELEASING_BRANCH\"}" \
+          -X POST $OPERATOR_PULL_URI
