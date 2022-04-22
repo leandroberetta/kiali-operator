@@ -53,7 +53,9 @@ jobs:
         id: current_version
         run: |
           RAW_VERSION=$(sed -rn 's/^VERSION \?= v(.*)/\1/p' Makefile)
+          
           VERSION=$(./.github/workflows/util/semver bump release $RAW_VERSION)
+          
           echo "::set-output name=current_version::$VERSION"
       
       - name: Determine releasing version
@@ -73,9 +75,13 @@ jobs:
       - name: Log information
         run: |
           echo "Release type: $RELEASE_TYPE"
+          
           echo "Build version: $CURRENT_VERSION"
+          
           echo "Releasing version: $RELEASING_VERSION"
+          
           echo "Branch version: $BRANCH_VERSION"
+          
           echo "Next version: $NEXT_VERSION"
   release:
     name: Release
@@ -97,35 +103,35 @@ jobs:
       uses: actions/checkout@v2
     
     - name: Set version to release
-      run: sed -i -r 's/^VERSION \?= v.*/VERSION \?= ${{ needs.initialize.outputs.current_version }}/' Makefile           
-           
-    - name: Test
-      run: |
-        echo $OPERATOR_GIT_URI
-        echo $OPERATOR_PULL_URI
-        echo $OPERATOR_RELEASE_URI
+      run: sed -i -r 's/^VERSION \?= v.*/VERSION \?= ${{ needs.initialize.outputs.current_version }}/' Makefile        
 
     - name: Build image
       run: make clean build
     
     - name: Push image
-      run: |
-        echo $OPERATOR_QUAY_TAG
+      run: |              
         docker login -u ${{ secrets.QUAY_USER }} -p ${{ secrets.QUAY_PASSWORD }} quay.io
+        
         make -e DOCKER_CLI_EXPERIMENTAL=enabled container-multi-arch-push-kiali-operator-quay
 
     - name: Configure git
       run: |
         git config user.email 'lea.beretta@gmail.com'
+        
         git config user.name 'leandroberetta'
 
     - name: Create tag
       if: ${{ needs.initialize.outputs.release_type != 'edge' }}
       run: |
         git add Makefile
+        
         git commit -m "Release $RELEASING_VERSION"
+        
         git push origin $(git rev-parse HEAD):refs/tags/$RELEASING_VERSION
+        
+        PRERELEASE=([[ $RELEASE_TYPE == *"snapshot"* ]] && echo "true") || ([[ $RELEASE_TYPE != *"snapshot"* ]] && echo "false")
+
         curl -H "Authorization: token ${{ secrets.GH_TOKEN }}" \
           -H "Content-Type: application/json" \
-          -d '{"name": "Kiali Operator $RELEASING_VERSION", "tag_name": "$RELEASING_VERSION", "prerelease": ${prerelease}}' \
+          -d '{"name": "Kiali Operator $RELEASING_VERSION", "tag_name": "$RELEASING_VERSION", "prerelease": $PRERELEASE}' \
           -X POST $OPERATOR_RELEASE_URI
