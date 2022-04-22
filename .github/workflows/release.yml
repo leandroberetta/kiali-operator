@@ -129,7 +129,7 @@ jobs:
         
         git push origin $(git rev-parse HEAD):refs/tags/$RELEASING_VERSION
         
-        PRERELEASE=([[ $RELEASE_TYPE == *"snapshot"* ]] && echo "true") || ([[ $RELEASE_TYPE != *"snapshot"* ]] && echo "false")
+        if [[ $RELEASE_TYPE == *"snapshot"* ]]; then export PRERELEASE="true"; else export PRERELEASE="false"; fi
 
         curl -H "Authorization: token ${{ secrets.GH_TOKEN }}" \
           -H "Content-Type: application/json" \
