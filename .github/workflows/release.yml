@@ -42,7 +42,7 @@ jobs:
       - name: Determine release type
         id: release_type
         if: ${{ github.event.inputs.release_type == 'auto'}}
-        run: echo "::set-output name=release_type::$(./.github/workflows/util/release_type.sh)"
+        run: echo ${{ github.event.inputs.release_type }} && echo "::set-output name=release_type::$(./.github/workflows/util/release_type.sh)"
   test:
     name: Test
     runs-on: ubuntu-20.04
