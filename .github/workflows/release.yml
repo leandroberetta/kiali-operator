@@ -20,12 +20,12 @@ on:
         default: leandroberetta/kiali-operator
         type: string
       operator_releasing_branch:
-        description: 'The operator repository's branch to release'
+        description: The operator repository's branch to release
         required: true
         default: refs/head/master
         type: string
       quay_operator_name:
-        description: 'The name of the Quay repository to push the release'        
+        description: The name of the Quay repository to push the release     
         type: string
         default: quay.io/leandroberetta/kiali
         required: true
