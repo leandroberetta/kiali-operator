@@ -141,7 +141,7 @@ jobs:
     
     - name: Create or update version branch      
       if: ${{ needs.initialize.outputs.release_type != 'edge' && !contains(needs.initialize.outputs.release_type, 'snapshot') }}
-      run: git push origin $(git rev-parse HEAD):refs/heads/$VERSION_BRANCH
+      run: git push origin $(git rev-parse HEAD):refs/heads/$BRANCH_VERSION
 
     - name: Create a PR to prepare for next version
       env:
