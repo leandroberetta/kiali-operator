@@ -88,6 +88,7 @@ jobs:
       RELEASING_VERSION: ${{ needs.initialize.outputs.releasing_version }}
       BRANCH_VERSION: ${{ needs.initialize.outputs.branch_version }}
       NEXT_VERSION: ${{ needs.initialize.outputs.next_version }}
+      OPERATOR_QUAY_TAG: "${{ github.event.inputs.quay_operator_name }}:${{ needs.initialize.outputs.releasing_version }}"
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
@@ -98,16 +99,11 @@ jobs:
     - name: Test
       run: cat Makefile
 
-    - name: Build
+    - name: Build image
       run: make clean build
     
-    - name: Release type
-      run: echo $RELEASE_TYPE
-    - name: Current version
-      run: echo $CURRENT_VERSION
-    - name: Releasing version
-      run: echo $RELEASING_VERSION
-    - name: Branch version
-      run: echo $BRANCH_VERSION
-    - name: Next version
-      run: echo $NEXT_VERSION
+    - name: Push image
+      run: |
+        echo $OPERATOR_QUAY_TAG
+        docker login -u ${{ secrets.QUAY_USER }} -p ${{ secrets.QUAY_PASSWORD }} quay.io
+#make -e DOCKER_CLI_EXPERIMENTAL=enabled container-multi-arch-push-kiali-operator-quay
