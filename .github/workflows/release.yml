@@ -38,7 +38,7 @@ jobs:
       release_type: ${{ steps.release_type.outputs.release_type || github.event.inputs.release_type }}
       current_version: ${{ steps.current_version.outputs.current_version }}
       releasing_version: ${{ steps.releasing_version.outputs.releasing_version }}
-      branch_version: ${{ steps.version_branch.outputs.version_branch }}
+      branch_version: v${{ steps.version_branch.outputs.version_branch }}
       next_version: ${{ steps.next_version.outputs.next_version }}
     steps:
       - name: Checkout code
@@ -158,5 +158,5 @@ jobs:
         
         curl -H "Authorization: token ${{ secrets.GH_TOKEN }}" \
                 -H "Content-Type: application/json" \
-                -d '{"title": "Prepare for next version", "body": "Please, merge to update version numbers and prepare for release $NEXT_VERSION.", "head": "${kialiBotUser}:$BUILD_TAG", "base": "$OPERATOR_RELEASING_BRANCH"}' \
+                -d "{\"title\": \"Prepare for next version\", \"body\": \"Please, merge to update version numbers and prepare for release $NEXT_VERSION.\", \"head\": \"leandroberetta:$BUILD_TAG\", \"base\": \"$OPERATOR_RELEASING_BRANCH\"}" \
                 -X POST $OPERATOR_PULL_URI
