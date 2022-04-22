@@ -1,0 +1,49 @@
+name: Kiali Operator Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Release Type'     
+        required: true
+        default: 'auto' 
+        type: choice
+        options:
+        - auto
+        - minor
+        - snapshot.0
+        - snpashot.1
+        - edge 
+      operator_repo:
+        description: 'The operator's GitHub repository, in owner/repo format'
+        required: true
+        default: leandroberetta/kiali-operator
+        type: string
+      operator_releasing_branch:
+        description: 'The operator repository's branch to release'
+        required: true
+        default: refs/head/master
+        type: string
+      quay_operator_name:
+        description: 'The name of the Quay repository to push the release'        
+        type: string
+        default: quay.io/leandroberetta/kiali
+        required: true
+  
+jobs:
+  initialize:
+    name: Initialize
+    runs-on: ubuntu-20.04
+    outputs:
+      release_type: ${{ steps.release_type.outputs.release_type || 'auto' }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2      
+      - name: Determine release type
+        id: release_type
+        if: ${{ github.event.inputs.release_type == 'auto'}}
+        run: echo "::set-output name=release_type::$(./.github/workflows/util/release_type.sh)"
+  test:
+    name: Test
+    needs: [initialize]
+    run: echo ${{ needs.initialize.outputs.release_type}}
