@@ -35,14 +35,14 @@ jobs:
     name: Initialize
     runs-on: ubuntu-20.04
     outputs:
-      release_type: ${{ steps.release_type.outputs.release_type || 'auto' }}
+      release_type: ${{ steps.release_type.outputs.release_type || github.event.inputs.release_type }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v2      
       - name: Determine release type
         id: release_type
         if: ${{ github.event.inputs.release_type == 'auto'}}
-        run: echo ${{ github.event.inputs.release_type }} && echo "::set-output name=release_type::$(./.github/workflows/util/release_type.sh)"
+        run: echo "::set-output name=release_type::$(./.github/workflows/util/release_type.sh)"
   test:
     name: Test
     runs-on: ubuntu-20.04
