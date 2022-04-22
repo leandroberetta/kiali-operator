@@ -47,7 +47,7 @@ jobs:
       - name: Determine release type
         id: release_type        
         run: |
-          if [[ github.event.inputs.release_type == 'auto' ]]
+          if [[ github.event.inputs.release_type == 'auto' ]];
           then
             echo "::set-output name=release_type::$(./.github/workflows/util/release_type.sh)"
           else
@@ -60,8 +60,7 @@ jobs:
           
           VERSION=$(./.github/workflows/util/semver bump release $RAW_VERSION)
           
-          echo "::set-output name=current_version::$VERSION"
-      
+          echo "::set-output name=current_version::$VERSION"      
       - name: Determine releasing version
         env:
           RELEASE_TYPE: ${{ steps.release_type.outputs.release_type }}
