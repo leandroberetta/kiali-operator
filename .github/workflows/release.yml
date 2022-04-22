@@ -123,7 +123,7 @@ jobs:
       if: ${{ needs.initialize.outputs.release_type != 'edge' }}
       run: |
         git add Makefile
-        git commit -m "Release $RELEASING_VERSION}"
+        git commit -m "Release $RELEASING_VERSION"
         git push origin \$(git rev-parse HEAD):refs/tags/$RELEASING_VERSION
         curl -H "Authorization: token ${{ secrets.GH_TOKEN }}" \
           -H "Content-Type: application/json" \
