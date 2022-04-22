@@ -77,14 +77,10 @@ jobs:
       
       - name: Log information
         run: |
-          echo "Release type: $RELEASE_TYPE"
-          
-          echo "Build version: $CURRENT_VERSION"
-          
-          echo "Releasing version: $RELEASING_VERSION"
-          
-          echo "Branch version: $BRANCH_VERSION"
-          
+          echo "Release type: $RELEASE_TYPE"         
+          echo "Build version: $CURRENT_VERSION"          
+          echo "Releasing version: $RELEASING_VERSION"          
+          echo "Branch version: $BRANCH_VERSION"          
           echo "Next version: $NEXT_VERSION"
   release:
     name: Release
@@ -124,7 +120,7 @@ jobs:
         
         git config user.name 'leandroberetta'
 
-    - name: Create tag
+    - name: Create tag and release
       # Edge release is not tagged in GitHub
       if: ${{ needs.initialize.outputs.release_type != 'edge' }}
       run: |
@@ -145,7 +141,7 @@ jobs:
     
     - name: Create or update version branch      
       if: ${{ needs.initialize.outputs.release_type != 'edge' && !contains(needs.initialize.outputs.release_type, 'snapshot') }}
-      run: git push origin $(git rev-parse HEAD):refs/heads/$VERSION_BRANCH"
+      run: git push origin $(git rev-parse HEAD):refs/heads/$VERSION_BRANCH
 
     - name: Create a PR to prepare for next version
       env:
