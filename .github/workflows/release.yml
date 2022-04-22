@@ -92,6 +92,6 @@ jobs:
     - name: Releasing version
       run: echo $RELEASING_VERSION
     - name: Branch version
-      run: echo $BRANCH VERSION
+      run: echo $BRANCH_VERSION
     - name: Next version
       run: echo $NEXT_VERSION
