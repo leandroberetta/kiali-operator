@@ -141,7 +141,7 @@ jobs:
           -X POST $OPERATOR_RELEASE_URI
     
     - name: Create or update version branch      
-      if: ${{ needs.initialize.outputs.release_type != 'edge' && !contains(needs.initialize.outputs.release_type, "snapshot") }}
+      if: ${{ needs.initialize.outputs.release_type != 'edge' && !contains(needs.initialize.outputs.release_type, 'snapshot') }}
       run: git push origin $(git rev-parse HEAD):refs/heads/$VERSION_BRANCH"
 
     - name: Create a PR to prepare for next version
