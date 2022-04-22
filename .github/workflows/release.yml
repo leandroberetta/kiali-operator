@@ -88,7 +88,10 @@ jobs:
       RELEASING_VERSION: ${{ needs.initialize.outputs.releasing_version }}
       BRANCH_VERSION: ${{ needs.initialize.outputs.branch_version }}
       NEXT_VERSION: ${{ needs.initialize.outputs.next_version }}
-      OPERATOR_QUAY_TAG: "${{ github.event.inputs.quay_operator_name }}:${{ needs.initialize.outputs.releasing_version }}"
+      OPERATOR_QUAY_TAG: ${{ github.event.inputs.quay_operator_name }}:${{ needs.initialize.outputs.releasing_version }}
+      OPERATOR_GIT_URI: https://github.com/${{ github.event.inputs.operator_repo }}.git
+      OPERATOR_PULL_URI: https://api.github.com/repos/${{ github.event.inputs.operator_repo }}/pulls
+      OPERATOR_RELEASE_URI: https://api.github.com/repos/${{ github.event.inputs.operator_repo }}/releases
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
@@ -97,7 +100,10 @@ jobs:
       run: sed -i -r 's/^VERSION \?= v.*/VERSION \?= ${{ needs.initialize.outputs.current_version }}/' Makefile           
            
     - name: Test
-      run: cat Makefile
+      run: |
+        echo $OPERATOR_GIT_URI
+        echo $OPERATOR_PULL_URI
+        echo $OPERATOR_RELEASE_URI
 
     - name: Build image
       run: make clean build
@@ -107,3 +113,14 @@ jobs:
         echo $OPERATOR_QUAY_TAG
         docker login -u ${{ secrets.QUAY_USER }} -p ${{ secrets.QUAY_PASSWORD }} quay.io
         make -e DOCKER_CLI_EXPERIMENTAL=enabled container-multi-arch-push-kiali-operator-quay
+
+    - name: Create tag
+      if: ${{ needs.initialize.outputs.release_type != 'edge' }}
+      run: |
+        git add Makefile
+        git commit -m "Release $RELEASING_VERSION}"
+        git push origin \$(git rev-parse HEAD):refs/tags/$RELEASING_VERSION
+        curl -H "Authorization: token ${{ secrets.GH_TOKEN }}" \
+          -H "Content-Type: application/json" \
+          -d '{"name": "Kiali Operator $RELEASING_VERSION", "tag_name": "$RELEASING_VERSION", "prerelease": ${prerelease}}' \
+          -X POST ${operatorReleaseUri}
