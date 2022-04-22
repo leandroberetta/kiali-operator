@@ -15,7 +15,7 @@ on:
         - snpashot.1
         - edge 
       operator_repo:
-        description: 'The operator's GitHub repository, in owner/repo format'
+        description: The operator's GitHub repository, in owner/repo format
         required: true
         default: leandroberetta/kiali-operator
         type: string
