@@ -51,7 +51,7 @@ jobs:
       
       - name: Determine current version
         id: current_version
-        run: echo "::set-output name:current_version::$(sed -rn 's/^VERSION \?= v(.*)/\1/p' Makefile)"
+        run: echo "::set-output name=current_version::$(sed -rn 's/^VERSION \?= v(.*)/\1/p' Makefile)"
       
       - name: Determine releasing version
         id: releasing_version
@@ -59,11 +59,11 @@ jobs:
       
       - name: Determine version branch
         id: version_branch
-        run: ./.github/workflows/util/semver bump release ${{ steps.current_version.outputs.current_version }} | sed 's/\.[[:digit:]]\+$$//'
+        run: echo "::set-output name=version_branch::$(./.github/workflows/util/semver bump release ${{ steps.current_version.outputs.current_version }} | sed 's/\.[[:digit:]]\+$$//')"
       
       - name: Determine next version
         id: next_version
-        run: ./.github/workflows/util/semver bump minor ${{ steps.current_version.outputs.current_version }}
+        run: echo "::set-output name=next_version::$(./.github/workflows/util/semver bump minor ${{ steps.current_version.outputs.current_version }})"
   release:
     name: Release
     runs-on: ubuntu-20.04
