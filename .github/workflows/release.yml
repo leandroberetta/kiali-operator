@@ -53,7 +53,7 @@ jobs:
         id: current_version
         run: |
           RAW_VERSION=$(sed -rn 's/^VERSION \?= v(.*)/\1/p' Makefile)
-          VERSION=$(./github/workflows/util/semver bump release $RAW_VERSION)
+          VERSION=$(./.github/workflows/util/semver bump release $RAW_VERSION)
           echo "::set-output name=current_version::$VERSION"
       
       - name: Determine releasing version
