@@ -69,6 +69,14 @@ jobs:
       - name: Determine next version
         id: next_version
         run: echo "::set-output name=next_version::$(./.github/workflows/util/semver bump minor ${{ steps.current_version.outputs.current_version }})"
+      
+      - name: Log information
+        run: |
+          echo "Release type: $RELEASE_TYPE"
+          echo "Build version: $CURRENT_VERSION"
+          echo "Releasing version: $RELEASING_VERSION"
+          echo "Branch version: $BRANCH_VERSION"
+          echo "Next version: $NEXT_VERSION"
   release:
     name: Release
     runs-on: ubuntu-20.04
@@ -81,10 +89,18 @@ jobs:
       BRANCH_VERSION: ${{ needs.initialize.outputs.branch_version }}
       NEXT_VERSION: ${{ needs.initialize.outputs.next_version }}
     steps:
-    #- name: Checkout code
-    #  uses: actions/checkout@v2
-    #- name: Build
-    #  run: make clean build
+    - name: Checkout code
+      uses: actions/checkout@v2
+    
+    - name: Set version to release
+      run: sed -i -r 's/^VERSION \\?= v.*/VERSION \\?= $CURRENT_VERSION/' Makefile
+
+    - name: Test
+      run: cat Makefile
+
+    - name: Build
+      run: make clean build
+    
     - name: Release type
       run: echo $RELEASE_TYPE
     - name: Current version
