@@ -1,4 +1,4 @@
-name: Kiali Operator Release
+name: Release
 
 on:
   workflow_dispatch:
@@ -36,13 +36,34 @@ jobs:
     runs-on: ubuntu-20.04
     outputs:
       release_type: ${{ steps.release_type.outputs.release_type || github.event.inputs.release_type }}
+      current_version: ${{ steps.current_version.outputs.current_version }}
+      releasing_version: ${{ steps.releasing_version.outputs.releasing_version }}
+      branch_version: ${{ steps.version_branch.outputs.version_branch }}
+      next_version: ${{ steps.next_version.outputs.next_version }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v2      
+      
       - name: Determine release type
         id: release_type
         if: ${{ github.event.inputs.release_type == 'auto'}}
         run: echo "::set-output name=release_type::$(./.github/workflows/util/release_type.sh)"
+      
+      - name: Determine current version
+        id: current_version
+        run: echo "::set-output name:current_version::$(sed -rn 's/^VERSION \?= v(.*)/\1/p' Makefile)"
+      
+      - name: Determine releasing version
+        id: releasing_version
+        run: echo "::set-output name=releasing_version::$(./github/workflows/util/releasing_version.sh)"
+      
+      - name: Determine version branch
+        id: version_branch
+        run: ./.github/workflows/util/semver bump release ${{ steps.current_version.outputs.current_version }} | sed 's/\.[[:digit:]]\+$$//'
+      
+      - name: Determine next version
+        id: next_version
+        run: ./.github/workflows/util/semver bump minor ${{ steps.current_version.outputs.current_version }}
   release:
     name: Release
     runs-on: ubuntu-20.04
@@ -50,10 +71,22 @@ jobs:
     env:
       OPERATOR_QUAY_NAME: ${{ github.event.inputs.quay_operator_name }}
       RELEASE_TYPE: ${{ needs.initialize.outputs.release_type }}
+      CURRENT_VERSION: ${{ needs.initialize.outputs.current_version }}
+      RELEASING_VERSION: ${{ needs.initialize.outputs.releasing_version }}
+      BRANCH_VERSION: ${{ needs.initialize.outputs.branch_version }}
+      NEXT_VERSION: ${{ needs.initialize.outputs.next_version }}
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
-    - name: Build
-      run: make clean build
-    - name: Test
+    #- name: Checkout code
+    #  uses: actions/checkout@v2
+    #- name: Build
+    #  run: make clean build
+    - name: Release type
       run: echo $RELEASE_TYPE
+    - name: Current version
+      run: echo $CURRENT_VERSION
+    - name: Releasing version
+      run: echo $RELEASING_VERSION
+    - name: Branch version
+      run: echo $BRANCH VERSION
+    - name: Next version
+      run: echo $NEXT_VERSION
