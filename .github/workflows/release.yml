@@ -46,6 +46,7 @@ jobs:
   release:
     name: Release
     runs-on: ubuntu-20.04
+    needs: [initialize]
     env:
       OPERATOR_QUAY_NAME: ${{ github.event.inputs.quay_operator_name }}
     steps:
@@ -53,10 +54,3 @@ jobs:
       uses: actions/checkout@v2
     - name: Build
       run: make clean build
-  test:
-    name: Test
-    runs-on: ubuntu-20.04
-    needs: [initialize]
-    steps:
-    - name: Test
-      run: echo ${{ needs.initialize.outputs.release_type}}
