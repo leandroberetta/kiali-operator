@@ -57,6 +57,7 @@ jobs:
           echo "::set-output name=current_version::$VERSION"
       
       - name: Determine releasing version
+        RELEASE_TYPE: ${{ steps.release_type.outputs.release_type }}
         id: releasing_version
         run: echo "::set-output name=releasing_version::$(./.github/workflows/util/releasing_version.sh)"
       
