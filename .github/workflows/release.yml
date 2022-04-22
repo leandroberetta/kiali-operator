@@ -43,6 +43,14 @@ jobs:
         id: release_type
         if: ${{ github.event.inputs.release_type == 'auto'}}
         run: echo "::set-output name=release_type::$(./.github/workflows/util/release_type.sh)"
+  release:
+    name: Release
+    runs-on: ubuntu-20.04
+    env:
+      OPERATOR_QUAY_NAME: ${{ github.event.inputs.quay_operator_name }}
+    steps:
+    - name: Build
+      run: make clean build
   test:
     name: Test
     runs-on: ubuntu-20.04
