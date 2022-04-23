@@ -77,11 +77,11 @@ jobs:
       
       - name: Log information
         run: |
-          echo "Release type: $RELEASE_TYPE"         
-          echo "Build version: $CURRENT_VERSION"          
-          echo "Releasing version: $RELEASING_VERSION"          
-          echo "Branch version: $BRANCH_VERSION"          
-          echo "Next version: $NEXT_VERSION"
+          echo "Release type: ${{ steps.release_type.outputs.release_type }}"
+          echo "Build version: ${{ steps.current_version.outputs.current_version }}"
+          echo "Releasing version: ${{ steps.releasing_version.outputs.releasing_version }}"
+          echo "Branch version: ${{ steps.version_branch.outputs.version_branch }}"
+          echo "Next version: ${{ steps.next_version.outputs.next_version }}"
   release:
     name: Release
     runs-on: ubuntu-20.04
@@ -108,12 +108,11 @@ jobs:
     - name: Build image
       run: make clean build
     
-    # - name: Push image
-    #   run: |              
-    #     docker login -u ${{ secrets.QUAY_USER }} -p ${{ secrets.QUAY_PASSWORD }} quay.io
+    - name: Push image
+      run: |              
+        docker login -u ${{ secrets.QUAY_USER }} -p ${{ secrets.QUAY_PASSWORD }} quay.io
         
-    #     make -e DOCKER_CLI_EXPERIMENTAL=enabled container-multi-arch-push-kiali-operator-quay
-
+        make -e DOCKER_CLI_EXPERIMENTAL=enabled container-multi-arch-push-kiali-operator-quay
     - name: Configure git
       run: |
         git config user.email 'lea.beretta@gmail.com'
