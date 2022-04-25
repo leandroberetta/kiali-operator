@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       release_type:
-        description: 'Release Type'     
+        description: 'Release type'     
         required: true
         default: 'auto' 
         type: choice
@@ -14,18 +14,18 @@ on:
         - snapshot.0
         - snpashot.1
         - edge 
-      operator_repo:
-        description: The operator's GitHub repository, in owner/repo format
+      repository:
+        description: Repository (in owner/repo format)
         required: true
         default: leandroberetta/kiali-operator
         type: string
-      operator_releasing_branch:
-        description: The operator repository's branch to release
+      releasing_branch:
+        description: Branch to release
         required: true
         default: master
         type: string
-      quay_operator_name:
-        description: The name of the Quay repository to push the release     
+      quay_repository:
+        description: Quay repository    
         type: string
         default: quay.io/leandroberetta/kiali-operator
         required: true
@@ -91,17 +91,17 @@ jobs:
     runs-on: ubuntu-20.04
     needs: [initialize]
     env:
-      OPERATOR_QUAY_NAME: ${{ github.event.inputs.quay_operator_name }}
-      OPERATOR_RELEASING_BRANCH: ${{ github.event.inputs.operator_releasing_branch }}
       RELEASE_TYPE: ${{ needs.initialize.outputs.release_type }}
       CURRENT_VERSION: ${{ needs.initialize.outputs.current_version }}
       RELEASING_VERSION: ${{ needs.initialize.outputs.releasing_version }}
       BRANCH_VERSION: ${{ needs.initialize.outputs.branch_version }}
       NEXT_VERSION: ${{ needs.initialize.outputs.next_version }}
-      OPERATOR_QUAY_TAG: ${{ github.event.inputs.quay_operator_name }}:${{ needs.initialize.outputs.releasing_version }}
-      OPERATOR_GIT_URI: https://github.com/${{ github.event.inputs.operator_repo }}.git
-      OPERATOR_PULL_URI: https://api.github.com/repos/${{ github.event.inputs.operator_repo }}/pulls
-      OPERATOR_RELEASE_URI: https://api.github.com/repos/${{ github.event.inputs.operator_repo }}/releases
+      OPERATOR_QUAY_NAME: ${{ github.event.inputs.quay_repository }}
+      OPERATOR_RELEASING_BRANCH: ${{ github.event.inputs.releasing_branch }}
+      OPERATOR_QUAY_TAG: ${{ github.event.inputs.quay_repository }}:${{ needs.initialize.outputs.releasing_version }}
+      OPERATOR_GIT_URI: https://github.com/${{ github.event.inputs.repository }}.git
+      OPERATOR_PULL_URI: https://api.github.com/repos/${{ github.event.inputs.repository }}/pulls
+      OPERATOR_RELEASE_URI: https://api.github.com/repos/${{ github.event.inputs.repository }}/releases
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
