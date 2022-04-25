@@ -17,7 +17,7 @@ on:
       repository:
         description: Repository (in owner/repo format)
         required: true
-        default: leandroberetta/kiali-operator
+        default: kiali/kiali-operator
         type: string
       releasing_branch:
         description: Branch to release
@@ -27,7 +27,7 @@ on:
       quay_repository:
         description: Quay repository    
         type: string
-        default: quay.io/leandroberetta/kiali-operator
+        default: quay.io/kiali/kiali-operator
         required: true
   
 jobs:
