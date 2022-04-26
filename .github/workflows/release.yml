@@ -35,7 +35,7 @@ jobs:
     name: Initialize
     runs-on: ubuntu-20.04
     outputs:
-      release_type: ${{ steps.release_type.outputs.release_type || github.event.inputs.release_type }}
+      release_type: ${{ steps.release_type.outputs.release_type }}
       current_version: ${{ steps.current_version.outputs.current_version }}
       releasing_version: ${{ steps.releasing_version.outputs.releasing_version }}
       branch_version: v${{ steps.version_branch.outputs.version_branch }}
@@ -56,115 +56,142 @@ jobs:
           else
             echo "::set-output name=release_type::${{ github.event.inputs.release_type }}"
           fi
-      - name: Determine current version
-        id: current_version
+      
+      - name: Determine release version
+        env:
+          RELEASE_TYPE: ${{ steps.release_type.outputs.release_type }}
+        id: release_version
         run: |
           RAW_VERSION=$(sed -rn 's/^VERSION \?= v(.*)/\1/p' Makefile)
           
-          VERSION=$(./.github/workflows/util/semver bump release $RAW_VERSION)
-          
-          echo "::set-output name=current_version::$VERSION"      
-      - name: Determine releasing version
-        env:
-          RELEASE_TYPE: ${{ steps.release_type.outputs.release_type }}
-        id: releasing_version
-        run: echo "::set-output name=releasing_version::$(./.github/workflows/util/releasing_version.sh)"
-      
-      - name: Determine version branch
-        id: version_branch
-        run: echo "::set-output name=version_branch::$(./.github/workflows/util/semver bump release ${{ steps.current_version.outputs.current_version }} | sed 's/\.[0-9]*\+$//')"
+          # Remove any pre release identifier (ie: "-SNAPSHOT")
+          RELEASE_VERSION=$(./.github/workflows/util/semver bump release $RAW_VERSION)          
+
+          if [[ $RELEASE_TYPE == "patch" ]]
+          then
+            RELEASE_VERSION=$(./.github/workflows/util/semver bump $RELEASE_TYPE $RELEASE_VERSION)
+          elif [[ $RELEASE_TYPE == *"snapshot"* ]]
+          then
+            RELEASE_VERSION=v$(./.github/workflows/util/semver bump prerel $RELEASE_TYPE $RELEASE_VERSION)
+          elif [[ $RELEASE_TYPE == "edge" ]]
+          then
+            RELEASE_VERSION=latest
+          fi
+
+          echo "::set-output name=release_version::v$RELEASE_VERSION"      
       
       - name: Determine next version
+        env:
+          RELEASE_TYPE: ${{ github.event.inputs.release_type }}
+          RELEASE_VERSION: ${{ steps.release_version.outputs.release_version }}
         id: next_version
-        run: echo "::set-output name=next_version::$(./.github/workflows/util/semver bump minor ${{ steps.current_version.outputs.current_version }})"
-      
+        run: |
+          # Drop the version prefix ("v")
+          RELEASE_VERSION=${RELEASE_VERSION:1}
+
+          if [[ $RELEASE_TYPE == "patch" ]]
+          then
+              NEXT_VERSION=v$(./.github/workflows/util/semver bump $RELEASE_TYPE $RELEASE_VERSION)
+          elif [[ $RELEASE_TYPE == "minor" ]]
+          then 
+              NEXT_VERSION=v$(./.github/workflows/util/semver bump minor $RELEASE_VERSION)          
+          fi
+
+          echo "::set-output name=next_version::$NEXT_VERSION"
+
+      - name: Determine branch version
+        env:
+          RELEASE_VERSION: ${{ steps.release_version.outputs.release_version }}      
+        id: branch_version
+        run: echo "::set-output name=branch_version::$(echo $RELEASE_VERSION | sed 's/\.[0-9]*\+$//')"      
+
       - name: Log information
         run: |
+        
           echo "Release type: ${{ steps.release_type.outputs.release_type }}"
-          
-          echo "Build version: ${{ steps.current_version.outputs.current_version }}"
-          
-          echo "Releasing version: ${{ steps.releasing_version.outputs.releasing_version }}"
-          
-          echo "Branch version: ${{ steps.version_branch.outputs.version_branch }}"
-          
+        
+          echo "Release version: ${{ steps.release_version.outputs.release_version }}"
+                   
           echo "Next version: ${{ steps.next_version.outputs.next_version }}"
-  release:
-    name: Release
-    runs-on: ubuntu-20.04
-    needs: [initialize]
-    env:
-      RELEASE_TYPE: ${{ needs.initialize.outputs.release_type }}
-      CURRENT_VERSION: ${{ needs.initialize.outputs.current_version }}
-      RELEASING_VERSION: ${{ needs.initialize.outputs.releasing_version }}
-      BRANCH_VERSION: ${{ needs.initialize.outputs.branch_version }}
-      NEXT_VERSION: ${{ needs.initialize.outputs.next_version }}
-      OPERATOR_QUAY_NAME: ${{ github.event.inputs.quay_repository }}
-      OPERATOR_RELEASING_BRANCH: ${{ github.event.inputs.releasing_branch }}
-      OPERATOR_QUAY_TAG: ${{ github.event.inputs.quay_repository }}:${{ needs.initialize.outputs.releasing_version }}
-      OPERATOR_PULL_URI: https://api.github.com/repos/${{ github.event.inputs.repository }}/pulls
-      OPERATOR_RELEASE_URI: https://api.github.com/repos/${{ github.event.inputs.repository }}/releases
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-        with:
-          repository: ${{ github.event.inputs.repository }}
-          ref: ${{ github.event.inputs.releasing_branch }}  
-      
-      - name: Set version to release
-        run: sed -i -r 's/^VERSION \?= v.*/VERSION \?= ${{ needs.initialize.outputs.current_version }}/' Makefile        
 
-      - name: Build image
-        run: make clean build
+          echo "Branch version: ${{ steps.branch_version.outputs.branch_version }}"
+  
+  # release:
+  #   name: Release
+  #   runs-on: ubuntu-20.04
+  #   needs: [initialize]
+  #   env:
+  #     RELEASE_TYPE: ${{ needs.initialize.outputs.release_type }}
+  #     CURRENT_VERSION: ${{ needs.initialize.outputs.current_version }}
+  #     RELEASING_VERSION: ${{ needs.initialize.outputs.releasing_version }}
+  #     BRANCH_VERSION: ${{ needs.initialize.outputs.branch_version }}
+  #     NEXT_VERSION: ${{ needs.initialize.outputs.next_version }}
+  #     OPERATOR_QUAY_NAME: ${{ github.event.inputs.quay_repository }}
+  #     OPERATOR_RELEASING_BRANCH: ${{ github.event.inputs.releasing_branch }}
+  #     OPERATOR_QUAY_TAG: ${{ github.event.inputs.quay_repository }}:${{ needs.initialize.outputs.releasing_version }}
+  #     OPERATOR_PULL_URI: https://api.github.com/repos/${{ github.event.inputs.repository }}/pulls
+  #     OPERATOR_RELEASE_URI: https://api.github.com/repos/${{ github.event.inputs.repository }}/releases
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v3
+  #       with:
+  #         repository: ${{ github.event.inputs.repository }}
+  #         ref: ${{ github.event.inputs.releasing_branch }}  
       
-      - name: Push image
-        run: |              
-          docker login -u ${{ secrets.QUAY_USER }} -p ${{ secrets.QUAY_PASSWORD }} quay.io
-          
-          make -e DOCKER_CLI_EXPERIMENTAL=enabled container-multi-arch-push-kiali-operator-quay
+  #     - name: Set version to release
+  #       run: sed -i -r 's/^VERSION \?= v.*/VERSION \?= ${{ needs.initialize.outputs.current_version }}/' Makefile        
+
+  #     - name: Build image
+  #       run: make clean build
       
-      - name: Configure git
-        run: |
-          git config user.email 'kiali-dev@googlegroups.com'
+  #     - name: Push image
+  #       run: |              
+  #         docker login -u ${{ secrets.QUAY_USER }} -p ${{ secrets.QUAY_PASSWORD }} quay.io
           
-          git config user.name 'kiali-bot'
-
-      - name: Create tag 
-        if: ${{ needs.initialize.outputs.release_type != 'edge' }}
-        run: |
-          git add Makefile
-          
-          git commit -m "Release $RELEASING_VERSION"
-          
-          git push origin $(git rev-parse HEAD):refs/tags/$RELEASING_VERSION
-          
-      - name: Create release
-        run: |
-          if [[ $RELEASE_TYPE == *"snapshot"* ]]; then export PRERELEASE="true"; else export PRERELEASE="false"; fi
-
-          curl -H "Authorization: token ${{ secrets.GH_TOKEN }}" \
-            -H "Content-Type: application/json" \
-            -d "{\"name\": \"Kiali Operator $RELEASING_VERSION\", \"tag_name\": \"$RELEASING_VERSION\", \"prerelease\": $PRERELEASE}" \
-            -X POST $OPERATOR_RELEASE_URI
+  #         make -e DOCKER_CLI_EXPERIMENTAL=enabled container-multi-arch-push-kiali-operator-quay
       
-      - name: Create or update version branch      
-        if: ${{ needs.initialize.outputs.release_type != 'edge' && !contains(needs.initialize.outputs.release_type, 'snapshot') }}
-        run: git push origin $(git rev-parse HEAD):refs/heads/$BRANCH_VERSION
+  #     - name: Configure git
+  #       run: |
+  #         git config user.email 'kiali-dev@googlegroups.com'
+          
+  #         git config user.name 'kiali-bot'
 
-      - name: Create a PR to prepare for next version
-        env:
-          BUILD_TAG: kiali-operator-release-${{ github.run_number }}-main
-        if: ${{ needs.initialize.outputs.release_type == 'minor' }}
-        run: |
-          sed -i -r "s/^VERSION \?= (.*)/VERSION \?= v$NEXT_VERSION-SNAPSHOT/" Makefile
+  #     - name: Create tag 
+  #       if: ${{ needs.initialize.outputs.release_type != 'edge' }}
+  #       run: |
+  #         git add Makefile
           
-          git add Makefile
+  #         git commit -m "Release $RELEASING_VERSION"
           
-          git commit -m "Prepare for next version"
+  #         git push origin $(git rev-parse HEAD):refs/tags/$RELEASING_VERSION
           
-          git push origin $(git rev-parse HEAD):refs/heads/$BUILD_TAG
+  #     - name: Create release
+  #       run: |
+  #         if [[ $RELEASE_TYPE == *"snapshot"* ]]; then export PRERELEASE="true"; else export PRERELEASE="false"; fi
+
+  #         curl -H "Authorization: token ${{ secrets.GH_TOKEN }}" \
+  #           -H "Content-Type: application/json" \
+  #           -d "{\"name\": \"Kiali Operator $RELEASING_VERSION\", \"tag_name\": \"$RELEASING_VERSION\", \"prerelease\": $PRERELEASE}" \
+  #           -X POST $OPERATOR_RELEASE_URI
+      
+  #     - name: Create or update version branch      
+  #       if: ${{ needs.initialize.outputs.release_type != 'edge' && !contains(needs.initialize.outputs.release_type, 'snapshot') }}
+  #       run: git push origin $(git rev-parse HEAD):refs/heads/$BRANCH_VERSION
+
+  #     - name: Create a PR to prepare for next version
+  #       env:
+  #         BUILD_TAG: kiali-operator-release-${{ github.run_number }}-main
+  #       if: ${{ needs.initialize.outputs.release_type == 'minor' }}
+  #       run: |
+  #         sed -i -r "s/^VERSION \?= (.*)/VERSION \?= v$NEXT_VERSION-SNAPSHOT/" Makefile
           
-          curl -H "Authorization: token ${{ secrets.GH_TOKEN }}" \
-            -H "Content-Type: application/json" \
-            -d "{\"title\": \"Prepare for next version\", \"body\": \"Please, merge to update version numbers and prepare for release $NEXT_VERSION.\", \"head\": \"kiali-bot:$BUILD_TAG\", \"base\": \"$OPERATOR_RELEASING_BRANCH\"}" \
-            -X POST $OPERATOR_PULL_URI
+  #         git add Makefile
+          
+  #         git commit -m "Prepare for next version"
+          
+  #         git push origin $(git rev-parse HEAD):refs/heads/$BUILD_TAG
+          
+  #         curl -H "Authorization: token ${{ secrets.GH_TOKEN }}" \
+  #           -H "Content-Type: application/json" \
+  #           -d "{\"title\": \"Prepare for next version\", \"body\": \"Please, merge to update version numbers and prepare for release $NEXT_VERSION.\", \"head\": \"kiali-bot:$BUILD_TAG\", \"base\": \"$OPERATOR_RELEASING_BRANCH\"}" \
+  #           -X POST $OPERATOR_PULL_URI
