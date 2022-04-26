@@ -103,6 +103,7 @@ jobs:
         env:
           RELEASE_VERSION: ${{ steps.release_version.outputs.release_version }}      
         id: branch_version
+        if: ${{ steps.release_type.outputs.release_type != 'edge' && !contains(steps.release_type.outputs.release_type, 'snapshot') }}
         run: echo "::set-output name=branch_version::$(echo $RELEASE_VERSION | sed 's/\.[0-9]*\+$//')"      
 
       - name: Log information
