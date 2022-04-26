@@ -19,7 +19,7 @@ on:
         required: true
         default: leandroberetta/kiali-operator
         type: string
-      releasing_branch:
+      release_branch:
         description: Branch to release
         required: true
         default: master
@@ -36,8 +36,7 @@ jobs:
     runs-on: ubuntu-20.04
     outputs:
       release_type: ${{ steps.release_type.outputs.release_type }}
-      current_version: ${{ steps.current_version.outputs.current_version }}
-      releasing_version: ${{ steps.releasing_version.outputs.releasing_version }}
+      release_version: ${{ steps.release_version.outputs.release_version }}
       branch_version: v${{ steps.version_branch.outputs.version_branch }}
       next_version: ${{ steps.next_version.outputs.next_version }}
     steps:
@@ -45,7 +44,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           repository: ${{ github.event.inputs.repository }}
-          ref: ${{ github.event.inputs.releasing_branch }}       
+          ref: ${{ github.event.inputs.release_branch }}       
       
       - name: Determine release type
         id: release_type        
@@ -121,82 +120,80 @@ jobs:
 
           echo "Branch version: ${{ steps.branch_version.outputs.branch_version }}"
   
-  # release:
-  #   name: Release
-  #   runs-on: ubuntu-20.04
-  #   needs: [initialize]
-  #   env:
-  #     RELEASE_TYPE: ${{ needs.initialize.outputs.release_type }}
-  #     CURRENT_VERSION: ${{ needs.initialize.outputs.current_version }}
-  #     RELEASING_VERSION: ${{ needs.initialize.outputs.releasing_version }}
-  #     BRANCH_VERSION: ${{ needs.initialize.outputs.branch_version }}
-  #     NEXT_VERSION: ${{ needs.initialize.outputs.next_version }}
-  #     OPERATOR_QUAY_NAME: ${{ github.event.inputs.quay_repository }}
-  #     OPERATOR_RELEASING_BRANCH: ${{ github.event.inputs.releasing_branch }}
-  #     OPERATOR_QUAY_TAG: ${{ github.event.inputs.quay_repository }}:${{ needs.initialize.outputs.releasing_version }}
-  #     OPERATOR_PULL_URI: https://api.github.com/repos/${{ github.event.inputs.repository }}/pulls
-  #     OPERATOR_RELEASE_URI: https://api.github.com/repos/${{ github.event.inputs.repository }}/releases
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v3
-  #       with:
-  #         repository: ${{ github.event.inputs.repository }}
-  #         ref: ${{ github.event.inputs.releasing_branch }}  
+  release:
+    name: Release
+    runs-on: ubuntu-20.04
+    needs: [initialize]
+    env:
+      RELEASE_TYPE: ${{ needs.initialize.outputs.release_type }}      
+      RELEASE_VERSION: ${{ needs.initialize.outputs.release_version }}
+      BRANCH_VERSION: ${{ needs.initialize.outputs.branch_version }}
+      NEXT_VERSION: ${{ needs.initialize.outputs.next_version }}      
+      OPERATOR_RELEASE_BRANCH: ${{ github.event.inputs.release_branch }}
+      OPERATOR_QUAY_TAG: ${{ github.event.inputs.quay_repository }}:${{ needs.initialize.outputs.release_version }}
+      GH_PULL_URI: https://api.github.com/repos/${{ github.event.inputs.repository }}/pulls
+      GH_RELEASE_URI: https://api.github.com/repos/${{ github.event.inputs.repository }}/releases
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ github.event.inputs.repository }}
+          ref: ${{ github.event.inputs.release_branch }}  
       
-  #     - name: Set version to release
-  #       run: sed -i -r 's/^VERSION \?= v.*/VERSION \?= ${{ needs.initialize.outputs.current_version }}/' Makefile        
+      - name: Set version to release
+        run: sed -i -r 's/^VERSION \?= v.*/VERSION \?= $RELEASE_VERSION/' Makefile        
 
-  #     - name: Build image
-  #       run: make clean build
+      - name: Build image
+        run: make clean build
       
-  #     - name: Push image
-  #       run: |              
-  #         docker login -u ${{ secrets.QUAY_USER }} -p ${{ secrets.QUAY_PASSWORD }} quay.io
+      - name: Push image
+        run: |              
+          docker login -u ${{ secrets.QUAY_USER }} -p ${{ secrets.QUAY_PASSWORD }} quay.io
           
-  #         make -e DOCKER_CLI_EXPERIMENTAL=enabled container-multi-arch-push-kiali-operator-quay
+          make -e DOCKER_CLI_EXPERIMENTAL=enabled container-multi-arch-push-kiali-operator-quay
       
-  #     - name: Configure git
-  #       run: |
-  #         git config user.email 'kiali-dev@googlegroups.com'
+      - name: Configure git
+        run: |
+          git config user.email 'kiali-dev@googlegroups.com'
           
-  #         git config user.name 'kiali-bot'
+          git config user.name 'kiali-bot'
 
-  #     - name: Create tag 
-  #       if: ${{ needs.initialize.outputs.release_type != 'edge' }}
-  #       run: |
-  #         git add Makefile
+      - name: Create tag 
+        if: ${{ needs.initialize.outputs.release_type != 'edge' }}
+        run: |
+          git add Makefile
           
-  #         git commit -m "Release $RELEASING_VERSION"
+          git commit -m "Release $RELEASE_VERSION"
           
-  #         git push origin $(git rev-parse HEAD):refs/tags/$RELEASING_VERSION
+          git push origin $(git rev-parse HEAD):refs/tags/$RELEASE_VERSION
           
-  #     - name: Create release
-  #       run: |
-  #         if [[ $RELEASE_TYPE == *"snapshot"* ]]; then export PRERELEASE="true"; else export PRERELEASE="false"; fi
+      - name: Create release
+        run: |
+          if [[ $RELEASE_TYPE == *"snapshot"* ]]; then export PRERELEASE="true"; else export PRERELEASE="false"; fi
 
-  #         curl -H "Authorization: token ${{ secrets.GH_TOKEN }}" \
-  #           -H "Content-Type: application/json" \
-  #           -d "{\"name\": \"Kiali Operator $RELEASING_VERSION\", \"tag_name\": \"$RELEASING_VERSION\", \"prerelease\": $PRERELEASE}" \
-  #           -X POST $OPERATOR_RELEASE_URI
+          curl -H "Authorization: token ${{ secrets.GH_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"name\": \"Kiali Operator $RELEASE_VERSION\", \"tag_name\": \"$RELEASE_VERSION\", \"prerelease\": $PRERELEASE}" \
+            -X POST $GH_RELEASE_URI
       
-  #     - name: Create or update version branch      
-  #       if: ${{ needs.initialize.outputs.release_type != 'edge' && !contains(needs.initialize.outputs.release_type, 'snapshot') }}
-  #       run: git push origin $(git rev-parse HEAD):refs/heads/$BRANCH_VERSION
+      - name: Create or update version branch      
+        if: ${{ needs.initialize.outputs.release_type != 'edge' && !contains(needs.initialize.outputs.release_type, 'snapshot') }}
+        run: git push origin $(git rev-parse HEAD):refs/heads/$BRANCH_VERSION
 
-  #     - name: Create a PR to prepare for next version
-  #       env:
-  #         BUILD_TAG: kiali-operator-release-${{ github.run_number }}-main
-  #       if: ${{ needs.initialize.outputs.release_type == 'minor' }}
-  #       run: |
-  #         sed -i -r "s/^VERSION \?= (.*)/VERSION \?= v$NEXT_VERSION-SNAPSHOT/" Makefile
+      - name: Create a PR to prepare for next version
+        env:
+          BUILD_TAG: kiali-operator-release-${{ github.run_number }}-main
+        if: ${{ needs.initialize.outputs.release_type == 'minor' }}
+        run: |
+          sed -i -r "s/^VERSION \?= (.*)/VERSION \?= v$NEXT_VERSION-SNAPSHOT/" Makefile
           
-  #         git add Makefile
+          git add Makefile
           
-  #         git commit -m "Prepare for next version"
+          git commit -m "Prepare for next version"
           
-  #         git push origin $(git rev-parse HEAD):refs/heads/$BUILD_TAG
+          git push origin $(git rev-parse HEAD):refs/heads/$BUILD_TAG
           
-  #         curl -H "Authorization: token ${{ secrets.GH_TOKEN }}" \
-  #           -H "Content-Type: application/json" \
-  #           -d "{\"title\": \"Prepare for next version\", \"body\": \"Please, merge to update version numbers and prepare for release $NEXT_VERSION.\", \"head\": \"kiali-bot:$BUILD_TAG\", \"base\": \"$OPERATOR_RELEASING_BRANCH\"}" \
-  #           -X POST $OPERATOR_PULL_URI
+          curl -H "Authorization: token ${{ secrets.GH_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"title\": \"Prepare for next version\", \"body\": \"Please, merge to update version numbers and prepare for release $NEXT_VERSION.\", \"head\": \"kiali-bot:$BUILD_TAG\", \"base\": \"$OPERATOR_RELEASE_BRANCH\"}" \
+            -X POST $GH_PULL_URI
