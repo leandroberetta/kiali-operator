@@ -85,7 +85,7 @@ jobs:
           RELEASE_TYPE: ${{ github.event.inputs.release_type }}
           RELEASE_VERSION: ${{ steps.release_version.outputs.release_version }}
         id: next_version
-        if: ${{ steps.release_type.outputs.release_type == "patch" || steps.release_type.outputs.release_type == "minor" }}
+        if: ${{ steps.release_type.outputs.release_type == 'patch' || steps.release_type.outputs.release_type == 'minor' }}
         run: |
           # Drop the version prefix ("v")
           RELEASE_VERSION=${RELEASE_VERSION:1}
