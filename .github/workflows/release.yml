@@ -37,7 +37,7 @@ jobs:
     outputs:
       release_type: ${{ steps.release_type.outputs.release_type }}
       release_version: ${{ steps.release_version.outputs.release_version }}
-      branch_version: v${{ steps.version_branch.outputs.version_branch }}
+      branch_version: ${{ steps.branch_version.outputs.branch_version }}
       next_version: ${{ steps.next_version.outputs.next_version }}
     steps:
       - name: Checkout code
@@ -154,9 +154,9 @@ jobs:
       
       - name: Configure git
         run: |
-          git config user.email 'kiali-dev@googlegroups.com'
+          git config user.email 'lea.beretta@gmail.com'
           
-          git config user.name 'kiali-bot'
+          git config user.name 'leandroberetta'
 
       - name: Create tag 
         if: ${{ needs.initialize.outputs.release_type != 'edge' }}
@@ -195,5 +195,5 @@ jobs:
           
           curl -H "Authorization: token ${{ secrets.GH_TOKEN }}" \
             -H "Content-Type: application/json" \
-            -d "{\"title\": \"Prepare for next version\", \"body\": \"Please, merge to update version numbers and prepare for release $NEXT_VERSION.\", \"head\": \"kiali-bot:$BUILD_TAG\", \"base\": \"$OPERATOR_RELEASE_BRANCH\"}" \
+            -d "{\"title\": \"Prepare for next version\", \"body\": \"Please, merge to update version numbers and prepare for release $NEXT_VERSION.\", \"head\": \"leandroberetta:$BUILD_TAG\", \"base\": \"$OPERATOR_RELEASE_BRANCH\"}" \
             -X POST $GH_PULL_URI
