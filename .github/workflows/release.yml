@@ -72,7 +72,7 @@ jobs:
             RELEASE_VERSION=$(./.github/workflows/util/semver bump $RELEASE_TYPE $RELEASE_VERSION)
           elif [[ $RELEASE_TYPE == *"snapshot"* ]]
           then
-            RELEASE_VERSION=v$(./.github/workflows/util/semver bump prerel $RELEASE_TYPE $RELEASE_VERSION)
+            RELEASE_VERSION=$(./.github/workflows/util/semver bump prerel $RELEASE_TYPE $RELEASE_VERSION)
           elif [[ $RELEASE_TYPE == "edge" ]]
           then
             RELEASE_VERSION=latest
