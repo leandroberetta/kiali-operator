@@ -125,7 +125,7 @@ jobs:
       RELEASE_VERSION: ${{ needs.initialize.outputs.release_version }}
       BRANCH_VERSION: ${{ needs.initialize.outputs.branch_version }}
       NEXT_VERSION: ${{ needs.initialize.outputs.next_version }}      
-      OPERATOR_RELEASE_BRANCH: ${{ github.event.inputs.release_branch }}
+      RELEASE_BRANCH: ${{ github.event.inputs.release_branch }}
       OPERATOR_QUAY_TAG: ${{ github.event.inputs.quay_repository }}:${{ needs.initialize.outputs.release_version }}
       GH_PULL_URI: https://api.github.com/repos/${{ github.event.inputs.repository }}/pulls
       GH_RELEASE_URI: https://api.github.com/repos/${{ github.event.inputs.repository }}/releases
