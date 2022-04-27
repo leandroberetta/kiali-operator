@@ -145,11 +145,11 @@ jobs:
           
           make -e DOCKER_CLI_EXPERIMENTAL=enabled container-multi-arch-push-kiali-operator-quay
       
-      # - name: Configure git
-      #   run: |
-      #     git config user.email 'kiali-dev@googlegroups.com'
+      - name: Configure git
+        run: |
+          git config user.email 'kiali-dev@googlegroups.com'
           
-      #     git config user.name 'kiali-bot'
+          git config user.name 'kiali-bot'
 
       - name: Create tag 
         if: ${{ needs.initialize.outputs.release_type != 'edge' }}
