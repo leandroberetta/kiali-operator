@@ -192,11 +192,11 @@ jobs:
     - name: Set version to release
       run: sed -i -r "s/^VERSION \?= (.*)/VERSION \?= $RELEASE_VERSION/" Makefile
 
-    - name: Build and push image
-      run: |
-        docker login -u ${{ secrets.QUAY_USER }} -p ${{ secrets.QUAY_PASSWORD }} quay.io
+    # - name: Build and push image
+    #   run: |
+    #     docker login -u ${{ secrets.QUAY_USER }} -p ${{ secrets.QUAY_PASSWORD }} quay.io
         
-        make -e DOCKER_CLI_EXPERIMENTAL=enabled container-multi-arch-push-kiali-operator-quay
+    #     make -e DOCKER_CLI_EXPERIMENTAL=enabled container-multi-arch-push-kiali-operator-quay
     
     - name: Configure git
       run: |
@@ -210,16 +210,16 @@ jobs:
         
         git commit -m "Release $RELEASE_VERSION"
         
-        git push origin $(git rev-parse HEAD):refs/tags/$RELEASE_VERSION
+    #     git push origin $(git rev-parse HEAD):refs/tags/$RELEASE_VERSION
         
-    - name: Create release
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        gh release create $RELEASE_VERSION -t "Kiali $RELEASE_VERSION"
+    # - name: Create release
+    #   env:
+    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    #   run: |
+    #     gh release create $RELEASE_VERSION -t "Kiali $RELEASE_VERSION"
     
-    - name: Create or update version branch      
-      run: git push origin $(git rev-parse HEAD):refs/heads/$BRANCH_VERSION
+    # - name: Create or update version branch      
+    #   run: git push origin $(git rev-parse HEAD):refs/heads/$BRANCH_VERSION
 
     - name: Configure Operator SDK
       if: ${{ needs.initialize.outputs.release_type == 'minor' }}
