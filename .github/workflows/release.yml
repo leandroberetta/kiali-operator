@@ -225,6 +225,7 @@ jobs:
       if: ${{ needs.initialize.outputs.release_type == 'minor' }}
       run: |
         make get-operator-sdk
+        export PATH=$PATH:$OP_SDK
 
     - name: Create a PR to prepare for next version
       env:
@@ -240,7 +241,7 @@ jobs:
         ./create-new-version.sh -nv $NEXT_VERSION -ov $RELEASE_VERSION -om kiali-upstream/
         ./create-new-version.sh -nv $NEXT_VERSION -ov $RELEASE_VERSION -om kiali-community/
         cd ..
-        
+
         git commit -m "Prepare for next version"
         
         git push origin $(git rev-parse HEAD):refs/heads/$BUILD_TAG
