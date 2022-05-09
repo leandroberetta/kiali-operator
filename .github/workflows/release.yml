@@ -225,7 +225,7 @@ jobs:
       if: ${{ needs.initialize.outputs.release_type == 'minor' }}
       run: |
         make get-operator-sdk
-        export PATH=$PATH:$OP_SDK
+        export PATH="$PATH:$GITHUB_WORKSPACE/_output/operator-sdk-install/operator-sdk"
 
     - name: Create a PR to prepare for next version
       env:
@@ -233,6 +233,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       if: ${{ needs.initialize.outputs.release_type == 'minor' }}
       run: |
+        echo $PATH
         sed -i -r "s/^VERSION \?= (.*)/VERSION \?= $NEXT_VERSION-SNAPSHOT/" Makefile
         
         git add Makefile
