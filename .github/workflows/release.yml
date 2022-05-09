@@ -234,6 +234,7 @@ jobs:
       if: ${{ needs.initialize.outputs.release_type == 'minor' }}
       run: |
         export PATH="$PATH:$GITHUB_WORKSPACE/_output/operator-sdk-install/operator-sdk"
+        echo $PATH
         sed -i -r "s/^VERSION \?= (.*)/VERSION \?= $NEXT_VERSION-SNAPSHOT/" Makefile
         
         git add Makefile
