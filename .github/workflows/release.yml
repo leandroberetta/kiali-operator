@@ -234,13 +234,13 @@ jobs:
       run: |
         export PATH="$PATH:$GITHUB_WORKSPACE/_output/operator-sdk-install"
 
-        sed -i -r "s/^VERSION \?= (.*)/VERSION \?= $NEXT_VERSION-SNAPSHOT/" Makefile
+        sed -i -r "s/^VERSION \?= (.*)/VERSION \?= $NEXT_VERSION-SNAPSHOT/" Makefile      
         
-        git add Makefile
-
         # Using versions without the prefix 'v'        
         ./manifests/create-new-version.sh -nv ${NEXT_VERSION:1} -ov ${RELEASE_VERSION:1} -om kiali-upstream/
         ./manifests/create-new-version.sh -nv ${NEXT_VERSION:1} -ov ${RELEASE_VERSION:1} -om kiali-community/
+
+        git add Makefile manifests/
 
         git commit -m "Prepare for next version"
         
