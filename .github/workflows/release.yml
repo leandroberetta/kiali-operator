@@ -107,7 +107,6 @@ jobs:
         RELEASE_TYPE: ${{ env.release_type }}
         RELEASE_VERSION: ${{ env.release_version }}
       id: next_version
-      if: ${{ env.release_type != 'skip' }}
       run: |
         if [[ $RELEASE_TYPE == "patch" ]]
         then
