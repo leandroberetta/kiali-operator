@@ -81,9 +81,9 @@ jobs:
         fi
     
     - name: Determine release version
-      if: ${{ steps.release_type.outputs.release_type != 'skip' }}
+      if: ${{ env.release_type != 'skip' }}
       env:
-        RELEASE_TYPE: ${{ steps.release_type.outputs.release_type }}
+        RELEASE_TYPE: ${{ env.release_type }}
       id: release_version
       run: |
         RAW_VERSION=$(sed -rn 's/^VERSION \?= (.*)/\1/p' Makefile)
@@ -102,11 +102,12 @@ jobs:
         echo "release_version=$RELEASE_VERSION" >> $GITHUB_ENV
     
     - name: Determine next version
-      if: ${{ steps.release_type.outputs.release_type != 'skip' }}
+      if: ${{ env.release_type != 'skip' }}
       env:
-        RELEASE_TYPE: ${{ steps.release_type.outputs.release_type }}
-        RELEASE_VERSION: ${{ steps.release_version.outputs.release_version }}
+        RELEASE_TYPE: ${{ env.release_type }}
+        RELEASE_VERSION: ${{ env.release_version }}
       id: next_version
+      if: ${{ env.release_type != 'skip' }}
       run: |
         if [[ $RELEASE_TYPE == "patch" ]]
         then
@@ -119,17 +120,17 @@ jobs:
         echo "next_version=$NEXT_VERSION" >> $GITHUB_ENV
 
     - name: Determine branch version
-      if: ${{ steps.release_type.outputs.release_type != 'skip' }}
+      if: ${{ env.release_type != 'skip' }}
       env:
-        RELEASE_VERSION: ${{ steps.release_version.outputs.release_version }}
+        RELEASE_VERSION: ${{ env.release_version }}
       id: branch_version
       run: echo "branch_version=$(echo $RELEASE_VERSION | sed 's/\.[0-9]*\+$//')" >> $GITHUB_ENV
 
     - name: Determine Quay tag
-      if: ${{ steps.release_type.outputs.release_type != 'skip' }}
+      if: ${{ env.release_type != 'skip' }}
       env:
-        RELEASE_VERSION: ${{ steps.release_version.outputs.release_version }}
-        BRANCH_VERSION: ${{ steps.branch_version.outputs.branch_version }}
+        RELEASE_VERSION: ${{ env.release_version }}
+        BRANCH_VERSION: ${{ env.branch_version }}
       id: quay_tag
       run: |
         if [ -z ${{ github.event.inputs.quay_repository }} ];
