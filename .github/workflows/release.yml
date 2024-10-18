@@ -1,9 +1,9 @@
 name: Release
 
 on:
-  schedule:
+  #schedule:
   # Every Monday at 07:00 (UTC)
-  - cron: '00 7 * * MON'
+  #- cron: '00 7 * * MON'
   workflow_dispatch:
     inputs:
       release_type:
@@ -11,6 +11,7 @@ on:
         required: true
         type: choice
         options:
+        - major
         - minor
         - patch
       release_branch:
@@ -111,6 +112,9 @@ jobs:
         elif [[ $RELEASE_TYPE == "minor" ]]
         then
           RELEASE_VERSION=$RELEASE_VERSION
+        elif [[ $RELEASE_TYPE == "major" ]]
+        then
+          RELEASE_VERSION=$RELEASE_VERSION
         fi
 
         echo "release_version=$RELEASE_VERSION" >> $GITHUB_OUTPUT
@@ -128,6 +132,9 @@ jobs:
         elif [[ $RELEASE_TYPE == "minor" ]]
         then 
             NEXT_VERSION=$(python bump.py $RELEASE_TYPE $RELEASE_VERSION)
+        elif [[ $RELEASE_TYPE == "major" ]]
+        then
+            NEXT_VERSION=$(python bump.py "patch" $RELEASE_VERSION)
         fi
 
         echo "next_version=$NEXT_VERSION" >> $GITHUB_OUTPUT
