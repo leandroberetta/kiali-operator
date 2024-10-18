@@ -252,7 +252,7 @@ jobs:
       run: git push origin $(git rev-parse HEAD):refs/heads/$BRANCH_VERSION
 
     - name: Configure Operator SDK
-      if: ${{ needs.initialize.outputs.release_type == 'minor' }}
+      if: ${{ needs.initialize.outputs.release_type == 'minor' || needs.initialize.outputs.release_type == 'major' }}
       run: |
         make get-operator-sdk
 
