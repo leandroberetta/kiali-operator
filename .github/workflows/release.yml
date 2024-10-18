@@ -216,7 +216,7 @@ jobs:
     - name: Create tag
       run: |
         # Skip OLM metadata for patch releases
-        if [[ $RELEASE_TYPE == "minor" ]]
+        if [[ $RELEASE_TYPE == "minor" || $RELEASE_TYPE == "major" ]]
         then
           VERSION_TO_RELEASE=${RELEASE_VERSION:1}
           DATETIME_NOW="$(date --utc +'%FT%TZ')"
