@@ -134,7 +134,7 @@ jobs:
             NEXT_VERSION=$(python bump.py $RELEASE_TYPE $RELEASE_VERSION)
         elif [[ $RELEASE_TYPE == "major" ]]
         then
-            NEXT_VERSION=$(python bump.py "patch" $RELEASE_VERSION)
+            NEXT_VERSION=$(python bump.py "minor" $RELEASE_VERSION)
         fi
 
         echo "next_version=$NEXT_VERSION" >> $GITHUB_OUTPUT
@@ -260,7 +260,7 @@ jobs:
       env:
         BUILD_TAG: kiali-operator-release-${{ github.run_number }}-main
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      if: ${{ needs.initialize.outputs.release_type == 'minor' }}
+      if: ${{ needs.initialize.outputs.release_type == 'minor' || needs.initialize.outputs.release_type == 'major' }}
       run: |
         export PATH="$PATH:$GITHUB_WORKSPACE/_output/operator-sdk-install"
 
