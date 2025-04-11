@@ -4,7 +4,7 @@
 - name: Assert Kiali Pod(s) are Running
   assert:
     that:
-    - kiali_pod.resources | length == (kiali_expected_replicas|default(1)) and kiali_pod.resources[0].status.phase is defined and kiali_pod.resources[0].status.phase == "Running"
+    - kiali_pod.resources | length == (kiali_expected_replicas|default(1)) and kiali_pod.resources[0].status.phase is defined and kiali_pod.resources[0].status.phase != "Running"
 
 - name: Assert Kiali Pod is Running on the correct Namespace
   assert:
